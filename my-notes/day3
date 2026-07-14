@@ -1,0 +1,325 @@
+# 我的 AI Engineering 学习记录
+
+## 2026-07-13
+
+今天是学习计划的 Day 3，主要学习 **Phase 02: ML Fundamentals**，目标是理解机器学习项目的基本闭环。
+
+## 今日学习主题
+
+今天重点学习的是：
+
+```text
+数据 -> 特征 -> 模型 -> 训练 -> 预测 -> 评估 -> 调参 -> Pipeline
+```
+
+也就是机器学习项目从数据到模型评估的完整流程。
+
+## 今日重点 Lesson
+
+Phase 02 中我重点学习和运行了这些 lesson：
+
+- `01-what-is-machine-learning`
+- `02-linear-regression`
+- `03-logistic-regression`
+- `08-feature-engineering`
+- `09-model-evaluation`
+- `10-bias-variance`
+- `12-hyperparameter-tuning`
+- `13-ml-pipelines`
+
+其中最重要的是：
+
+- 线性回归：用于预测连续值
+- 逻辑回归：用于分类任务
+- 模型评估：判断模型效果好不好
+- Bias / Variance：理解欠拟合和过拟合
+- ML Pipeline：把数据预处理和模型训练组织成可靠流程
+
+## 今日运行的官方代码
+
+今天运行了 `test-ml-pipelines/main.py`，学习了机器学习 Pipeline 的完整流程。
+
+运行过程中遇到了依赖问题。
+
+### 问题 1：NumPy DLL 被 Windows 阻止
+
+报错内容：
+
+```text
+ImportError: DLL load failed while importing _bounded_integers:
+应用程序控制策略已阻止此文件。
+```
+
+原因：
+
+```text
+Windows 安全策略阻止了 numpy 的底层二进制文件加载。
+```
+
+解决思路：
+
+```text
+重新安装 numpy，必要时降级到稳定版本。
+```
+
+### 问题 2：NumPy / SciPy / scikit-learn 版本不兼容
+
+报错内容：
+
+```text
+AttributeError: module 'numpy' has no attribute 'long'
+```
+
+原因：
+
+```text
+numpy 版本太新，而 scipy / sklearn 里还在使用旧的 np.long。
+```
+
+解决方法：
+
+```powershell
+d:/ai-engineering/.venv/Scripts/python.exe -m pip uninstall numpy scipy scikit-learn
+
+d:/ai-engineering/.venv/Scripts/python.exe -m pip install "numpy==1.26.4" "scipy==1.11.4" "scikit-learn==1.3.2" -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+最终成功运行。
+
+## 今日代码运行结果理解
+
+### 1. Data Leakage Demonstration
+
+运行结果：
+
+```text
+Leaky (scaler fit on all data):    0.925
+Clean (scaler fit on train only):  0.925
+Difference:                        +0.000
+```
+
+我学到：
+
+```text
+数据泄漏指测试集的信息提前进入训练过程。
+即使只是标准化、特征选择、编码器 fit，也不能使用测试集。
+```
+
+正确做法：
+
+```text
+预处理器只能在训练集上 fit，再用于测试集 transform。
+```
+
+### 2. Pipeline From Scratch
+
+运行结果：
+
+```text
+Train accuracy: 0.992
+Test accuracy:  0.967
+```
+
+我学到：
+
+```text
+Pipeline 可以把数据标准化和模型训练串起来。
+训练集和测试集分数都比较高，说明模型效果较好。
+```
+
+### 3. Full Pipeline With Mixed Data Types
+
+运行结果：
+
+```text
+Train accuracy: 0.812
+Test accuracy:  0.680
+```
+
+我学到：
+
+```text
+真实数据通常包含数值特征、类别特征、缺失值。
+完整 Pipeline 需要同时处理这些不同类型的数据。
+```
+
+训练分数高于测试分数，说明模型可能存在一定过拟合。
+
+### 4. Cross Validation With Pipeline
+
+运行结果：
+
+```text
+5-fold CV scores: ['0.720', '0.730', '0.740', '0.750', '0.680']
+Mean: 0.724 +/- 0.024
+```
+
+我学到：
+
+```text
+交叉验证可以更稳定地评估模型表现。
+每一折都要单独 fit 预处理器，避免数据泄漏。
+```
+
+### 5. Handling Unknown Categories
+
+运行结果：
+
+```text
+'seattle' (unknown) encoded: [0. 0. 0. 0.]
+```
+
+我学到：
+
+```text
+线上数据可能出现训练时没见过的新类别。
+编码器需要能处理 unknown category，否则程序会崩。
+```
+
+### 6. Model Comparison Via Pipeline
+
+运行结果：
+
+```text
+Logistic Regression:  0.756 +/- 0.017
+Decision Tree d=3:    0.684 +/- 0.054
+Decision Tree d=5:    0.724 +/- 0.024
+Decision Tree d=10:   0.684 +/- 0.078
+```
+
+我学到：
+
+```text
+模型不是越复杂越好。
+决策树太浅可能欠拟合，太深可能过拟合。
+```
+
+本次实验里逻辑回归表现最好。
+
+### 7. Experiment Tracking
+
+运行结果：
+
+```text
+Best run: #5
+Config: {'model': 'logistic', 'lr': 0.1, 'n_iter': 1000}
+Accuracy: 0.758 +/- 0.012
+```
+
+我学到：
+
+```text
+机器学习实验需要记录每次模型配置和结果。
+这样才能知道哪个模型、哪个参数效果最好。
+```
+
+### 8. Reproducibility Check
+
+运行结果：
+
+```text
+Run 1 == Run 2: True
+Run 1 == Run 3: False
+```
+
+我学到：
+
+```text
+相同 random seed 会得到相同结果。
+不同 seed 可能导致不同结果。
+```
+
+所以机器学习实验中要设置：
+
+```python
+random_state=42
+```
+
+## 今日完成的项目
+
+今天创建了自己的机器学习基础项目：
+
+```text
+my-projects/ml-basics-demo
+```
+
+项目内容：
+
+```text
+1. 使用线性回归预测连续值
+2. 使用逻辑回归完成二分类
+3. 划分训练集和测试集
+4. 输出模型预测结果
+5. 使用评估指标判断模型效果
+```
+
+项目让我理解了机器学习最小闭环：
+
+```text
+准备数据 -> 划分训练集/测试集 -> 训练模型 -> 预测 -> 评估
+```
+
+## 今日核心概念总结
+
+### 线性回归
+
+```text
+用于预测连续值，比如房价、销量、成绩。
+```
+
+### 逻辑回归
+
+```text
+用于分类任务，比如是否通过、是否点击、是否垃圾邮件。
+```
+
+### 训练集
+
+```text
+模型用来学习的数据。
+```
+
+### 测试集
+
+```text
+用来检查模型是否真的学会，而不是死记训练数据。
+```
+
+### 数据泄漏
+
+```text
+测试集信息提前进入训练流程，导致模型评估结果虚高。
+```
+
+### Pipeline
+
+```text
+把数据预处理、特征工程、模型训练组合成一条固定流程。
+```
+
+### 交叉验证
+
+```text
+多次划分训练集和测试集，用平均结果评估模型稳定性。
+```
+
+### 可复现性
+
+```text
+通过设置随机种子，让实验结果可以重复。
+```
+
+## 今日收获
+
+今天我理解了：
+
+- 机器学习不是只训练模型
+- 数据处理和模型评估同样重要
+- Pipeline 可以避免数据泄漏
+- 交叉验证可以让评估更稳定
+- 实验记录可以帮助比较模型效果
+- 随机种子可以保证实验可复现
+
+## 今日一句话总结
+
+机器学习项目的重点不是“跑出一个模型”，而是建立一条可靠的流程：从数据处理、模型训练、评估比较到实验复现，每一步都要清楚、稳定、可追踪。
